@@ -1,9 +1,9 @@
 package com.umk.imagesstore.domain
 
-import com.umk.imagesstore.infrastructure.repository.Image
+import com.umk.imagesstore.infrastructure.repository.DbImage
+import com.umk.imagesstore.infrastructure.repository.DbImageContent
 import com.umk.imagesstore.infrastructure.repository.ImageNotFoundException
 import com.umk.imagesstore.infrastructure.repository.ImagesRepository
-import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
@@ -15,14 +15,11 @@ class ImageService(
 
     fun saveImage(file: MultipartFile): Image {
         assertIsFileSupported(file)
-        val image = with (file.bytes) {
-            Image(hash = sha256Hex(this), bytes = this.toList())
-        }
-        imagesRepository.save(image)
-        return image
+        return imagesRepository.save(file.toDbImageContent()).toDomain()
     }
 
-    fun getImage(id: String) = imagesRepository.findByIdOrNull(id) ?: throw ImageNotFoundException(id)
+    fun getImage(id: String): Image =
+        imagesRepository.findByIdOrNull(id)?.toDomain() ?: throw ImageNotFoundException(id)
 
     private fun assertIsFileSupported(file: MultipartFile) {
         with (file.getFileName().getFileExtension()) {
@@ -35,6 +32,10 @@ class ImageService(
     private fun String.getFileExtension() = File(this).extension
 
     private fun MultipartFile.getFileName() = this.originalFilename ?: throw FileWithoutNameException()
+
+    private fun DbImage.toDomain() = Image(id = this.id, bytes = this.content.bytes)
+
+    private fun MultipartFile.toDbImageContent() = DbImageContent(this.bytes.toList())
 
     companion object {
         private val ALLOWED_FILE_EXTENSION = listOf("jpg", "jpeg")

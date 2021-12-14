@@ -21,7 +21,7 @@ class ImagesResource(
     @PostMapping(consumes = [MULTIPART_FORM_DATA_VALUE])
     fun saveImage(@RequestParam("file") file: MultipartFile): SaveImageResponse {
         return SaveImageResponse(
-            id = imageService.saveImage(file).hash
+            id = imageService.saveImage(file).id
         )
     }
 
