@@ -26,7 +26,7 @@ class ImagesResource(
     }
 
     @GetMapping("/{id}", produces = [IMAGE_JPEG_VALUE])
-    fun saveExternalImage(@PathVariable("id") id: String): ByteArray = imageService.getImage(id).bytes.toByteArray()
+    fun getImage(@PathVariable("id") id: String): ByteArray = imageService.getImage(id).bytes.toByteArray()
 }
 
 data class SaveImageResponse(val id: String)

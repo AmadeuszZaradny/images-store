@@ -12,7 +12,7 @@ You can switch target storage using `mongo.enabled` property in `application.pro
 
 ### How to use
 
- 1. To start application make sure you are using Java 11 and run `./gradlew bootRun` command.
+ 1. To start application make sure you are using Java 15 and run `./gradlew bootRun` command.
  2. To save image send POST request to `/images` endpoint for example:
      ```
     curl --request POST --url http://localhost:8080/images/ --header 'content-type: multipart/form-data' --form file=@/Users/amadeusz.zaradny/example/panda.jpeg
