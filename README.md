@@ -18,13 +18,19 @@ You can switch target storage using `mongo.enabled` property in `application.pro
     curl --request POST --url http://localhost:8080/images/ --header 'content-type: multipart/form-data' --form file=@/Users/amadeusz.zaradny/example/panda.jpeg
     ```
     response contains id associated with saved image for example `{"id":"61ba5705dc774443a1500251"}`.
- 3. To read saved image with id `61ba5705dc774443a1500251` you can send GET request via browser:
+ 3. To read saved image with id `61ba5705dc774443a1500251` you can send GET request via browser (ex: google chrome):
     ```
     http://localhost:8080/images/61ba5705dc774443a1500251
     ```  
- 4. Have fun :)   
+ 4. Have fun :)
  
- 
+### How to run test
+
+To run all tests use: `./gradlew check`
+
+To run only integration tests use: `./gradlew integration`
+
+To run only unit tests use: `./gradlew test`
  
  
    

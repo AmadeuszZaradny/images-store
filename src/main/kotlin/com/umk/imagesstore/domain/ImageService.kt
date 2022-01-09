@@ -4,6 +4,7 @@ import com.umk.imagesstore.infrastructure.repository.DbImage
 import com.umk.imagesstore.infrastructure.repository.DbImageContent
 import com.umk.imagesstore.infrastructure.repository.ImageNotFoundException
 import com.umk.imagesstore.infrastructure.repository.ImagesRepository
+import com.umk.imagesstore.infrastructure.repository.SaveImageRequest
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
@@ -15,7 +16,7 @@ class ImageService(
 
     fun saveImage(file: MultipartFile): Image {
         assertIsFileSupported(file)
-        return imagesRepository.save(file.toDbImageContent()).toDomain()
+        return imagesRepository.save(file.toSaveImageRequest()).toDomain()
     }
 
     fun getImage(id: String): Image =
@@ -33,9 +34,12 @@ class ImageService(
 
     private fun MultipartFile.getFileName() = this.originalFilename ?: throw FileWithoutNameException()
 
-    private fun DbImage.toDomain() = Image(id = this.id, bytes = this.content.bytes)
+    private fun DbImage.toDomain() = Image(id = this.id, name = this.fileName, bytes = this.content.bytes)
 
-    private fun MultipartFile.toDbImageContent() = DbImageContent(this.bytes.toList())
+    private fun MultipartFile.toSaveImageRequest() = SaveImageRequest(
+        fileName = this.getFileName(),
+        content = DbImageContent(this.bytes.toList())
+    )
 
     companion object {
         private val ALLOWED_FILE_EXTENSION = listOf("jpg", "jpeg")

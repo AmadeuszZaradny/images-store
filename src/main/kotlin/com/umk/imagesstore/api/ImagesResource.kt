@@ -1,7 +1,6 @@
 package com.umk.imagesstore.api
 
 import com.umk.imagesstore.domain.ImageService
-import org.springframework.http.MediaType
 import org.springframework.http.MediaType.IMAGE_JPEG_VALUE
 import org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,13 +19,16 @@ class ImagesResource(
 
     @PostMapping(consumes = [MULTIPART_FORM_DATA_VALUE])
     fun saveImage(@RequestParam("file") file: MultipartFile): SaveImageResponse {
-        return SaveImageResponse(
-            id = imageService.saveImage(file).id
-        )
+        return with(imageService.saveImage(file)) {
+            SaveImageResponse(
+                id = this.id,
+                name = this.name,
+            )
+        }
     }
 
     @GetMapping("/{id}", produces = [IMAGE_JPEG_VALUE])
     fun getImage(@PathVariable("id") id: String): ByteArray = imageService.getImage(id).bytes.toByteArray()
 }
 
-data class SaveImageResponse(val id: String)
+data class SaveImageResponse(val id: String, val name: String)

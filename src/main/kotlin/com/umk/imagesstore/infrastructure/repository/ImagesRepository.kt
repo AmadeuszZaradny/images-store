@@ -1,5 +1,6 @@
 package com.umk.imagesstore.infrastructure.repository
 
+import com.mongodb.client.gridfs.model.GridFSFile
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query.query
 import org.springframework.data.mongodb.gridfs.GridFsTemplate
@@ -8,7 +9,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 interface ImagesRepository {
-    fun save(image: DbImageContent): DbImage
+    fun save(request: SaveImageRequest): DbImage
     fun findByIdOrNull(id: String): DbImage?
 }
 
@@ -16,27 +17,37 @@ class InMemoryImagesRepository: ImagesRepository {
 
     private val storage: MutableMap<String, DbImage> = HashMap()
 
-    override fun save(image: DbImageContent): DbImage =
-        DbImage(UUID.randomUUID().toString(), image)
-            .also { storage[it.id] = DbImage(it.id, image) }
+    override fun save(request: SaveImageRequest): DbImage =
+        DbImage(UUID.randomUUID().toString(), request.fileName, request.content)
+            .also { storage[it.id] = DbImage(it.id, request.fileName, request.content) }
 
     override fun findByIdOrNull(id: String) = storage[id]
+
+    fun deleteAll() {
+        storage.clear()
+    }
+
+    fun findAll() = storage.values.toList()
 }
 
 class MongoImagesRepository(
     private val gridFsTemplate: GridFsTemplate
 ): ImagesRepository {
 
-    override fun save(image: DbImageContent): DbImage {
-        val input = ByteArrayInputStream(image.bytes.toByteArray())
-        val id = gridFsTemplate.store(input, IMAGE_FILE_NAME)
-        return DbImage(id.toString(), image)
+    override fun save(request: SaveImageRequest): DbImage {
+        val input = ByteArrayInputStream(request.content.bytes.toByteArray())
+        val id = gridFsTemplate.store(input, request.fileName, IMAGE_FILE_NAME)
+        return DbImage(id.toString(), request.fileName, request.content)
     }
 
     override fun findByIdOrNull(id: String): DbImage? {
-        val file = gridFsTemplate.findOne(query(Criteria(ID_FILED).`is`(id)))
-        val content = gridFsTemplate.getResource(file).content
-        return DbImage(id, DbImageContent(content.readAllBytes().toList()))
+        val file: GridFSFile? = gridFsTemplate.find(query(Criteria(ID_FILED).`is`(id))).firstOrNull()
+        return if (file !== null) {
+            val content = gridFsTemplate.getResource(file).content
+            DbImage(id, file.filename, DbImageContent(content.readAllBytes().toList()))
+        } else {
+            null
+        }
     }
 
     companion object {
@@ -45,7 +56,13 @@ class MongoImagesRepository(
     }
 }
 
+data class SaveImageRequest(
+    val fileName: String,
+    val content: DbImageContent
+)
 
-data class DbImage(val id: String, val content: DbImageContent)
+data class DbImage(val id: String, val fileName: String, val content: DbImageContent) {
+    fun getContentBytes(): ByteArray = content.bytes.toByteArray()
+}
 
 data class DbImageContent(val bytes: List<Byte>)
